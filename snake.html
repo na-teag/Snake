@@ -8,6 +8,64 @@
             margin: 0;
             min-height: 100%;
             width: 100%;
+            background: lightgray;
+        }
+
+        #gameMenu {
+            width: 222px;
+            height: 100vh;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: #578a34;
+        }
+
+
+        #gameInfo {
+            padding-top: 125px;;
+        }
+
+        #startButton {
+            align-items: center;
+            background-color: rgb(71, 117, 235);
+            border-radius: 8px;
+            border-style: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            font-size: 100%;
+            padding: 15px 40px;
+            margin-left: 30px;
+            margin-bottom: 75px;
+        }
+
+        #startButton:hover {
+            background-color: #1C84FF;
+        }
+
+        #difficulty {
+            margin-left: 30px;
+            background-color: rgb(170, 215, 81);
+            height: 25px;
+            width: 110px;
+            border-radius: 5px;;
+        }
+
+        #scoreLine {
+            margin-top: 40px;
+            margin-left: 30px;
+            display: flex;
+            align-items: center;
+            font-size: 30px;
+        }
+
+        #score {
+            display: inline;
+        }
+
+        img {
+            height: 50px;
+            margin-bottom: 15px;
         }
 
         #gameCanvas {
@@ -15,11 +73,25 @@
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            border: 20px solid #578a34;
+            border-width: 20px;
+            border-color: #578a34;
+            border-style: solid;
         }
     </style>
 </head>
 <body>
+    <div id="gameMenu">
+        <div id="gameInfo">
+            <button id="startButton" role="button">Start</button>
+            <select id="difficulty">
+                <option value="500">difficulty 1</option>
+                <option value="350">difficulty 2</option>
+                <option value="200">difficulty 3</option>
+                <option value="100">difficulty 4</option>
+            </select>
+            <div id="scoreLine"><img src="apple.png" alt="apple"> : <p id="score">0</p></div>
+        </div>
+    </div>
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -116,6 +188,23 @@
             return array.filter(item =>
                 !fullCells.some(el => el.x === item.x && el.y === item.y)
             );
+        }
+
+        function drawBackgroundCells(canvasMonad) {
+            const ctx = canvasMonad.getContext('2d')
+            ctx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+
+            // draw the background cells
+            for (let i = 0; i < WORLD_HEIGHT; i++) {
+                for (let j = 0; j < WORLD_WIDTH; j++) {
+                    if ((i % 2 + j) % 2 === 0) {
+                        ctx.fillStyle = `rgb(170, 215, 81)`
+                    } else {
+                        ctx.fillStyle = `rgb(162, 209, 73)`
+                    }
+                    ctx.fillRect(...convert(j, i))
+                }
+            }
         }
 
 
@@ -217,8 +306,12 @@
                         return {
                             ...entity,
                             gameOn: false,
-                            score: snake.position.length
+                            score: snake.position.length-2
                         }
+                    }
+                    return {
+                        ...entity,
+                        score: snake.position.length-2
                     }
                 }
                 return entity
@@ -234,19 +327,7 @@
                 canvasMonad.chain(
                     canvas => {
                         const ctx = canvasMonad.getContext('2d')
-                        ctx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
-
-                        // draw the background cells
-                        for (let i = 0; i < WORLD_HEIGHT; i++) {
-                            for (let j = 0; j < WORLD_WIDTH; j++) {
-                                if ((i % 2 + j) % 2 === 0) {
-                                    ctx.fillStyle = `rgb(170, 215, 81)`
-                                } else {
-                                    ctx.fillStyle = `rgb(162, 209, 73)`
-                                }
-                                ctx.fillRect(...convert(j, i))
-                            }
-                        }
+                        drawBackgroundCells(canvasMonad)
 
                         // draw the entities
                         entities.map(
@@ -277,27 +358,34 @@
 
 
 
-        let entities = [
-            entityCreator({
-                id: "settings",
-                type: "settings",
-                difficulty: 750, // time (ms) between game loops
-                gameOn: true,
-                score: 0
-            }),
-            entityCreator({
-                id: "snake",
-                type: "snake",
-                position: [{x: 7, y: 3},{x: 7, y: 2}],
-                direction: "ArrowUp"
-            }),
-            entityCreator({
-                id: "apple",
-                type: "apple",
-                sprite: "apple",
-                position: {x: 7, y:8}
-            })
-        ]
+
+
+
+        let entities;
+
+        function setupEntities() {
+            return [
+                entityCreator({
+                    id: "settings",
+                    type: "settings",
+                    difficulty: 100, // time (ms) between game loops
+                    gameOn: true,
+                    score: 0
+                }),
+                entityCreator({
+                    id: "snake",
+                    type: "snake",
+                    position: [{x: 7, y: 3},{x: 7, y: 2}],
+                    direction: "ArrowUp"
+                }),
+                entityCreator({
+                    id: "apple",
+                    type: "apple",
+                    sprite: "apple",
+                    position: {x: 7, y:8}
+                })
+            ]
+        }
 
         const images = {
             apple: new Image()
@@ -312,6 +400,8 @@
         let inputMaybe = Maybe(rawInput)
         let canvas = document.getElementById("gameCanvas")
         let canvasMonad = CanvasMonad(canvas)
+
+        const startButton = document.getElementById("startButton");
 
 
         InputMonad(document).subscribe("keydown", e => {
@@ -332,15 +422,36 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
+
+
+
+
+
+
+
+
         function gameLoop() {
             const settings = entities.find(entity => entity.id === "settings");
             if (settings.gameOn) {
                 entities = gameUpdate(entities)
+                document.getElementById("score").innerHTML = settings.score.toString();
                 setTimeout(gameLoop, settings.difficulty)
+            } else {
+                document.getElementById("startButton").disabled = false
             }
         }
 
-        gameLoop()
+        startButton.addEventListener("click", () => {
+            entities = setupEntities()
+            const settings = entities.find(entity => entity.id === "settings");
+            settings.gameOn = true;
+            settings.difficulty = Number(document.getElementById("difficulty").value)
+            document.getElementById("startButton").disabled = true
+            document.getElementById("score").innerHTML = "0"
+
+            gameLoop();
+        });
+        drawBackgroundCells(canvasMonad)
 
         /*
 
