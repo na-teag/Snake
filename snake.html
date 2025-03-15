@@ -107,9 +107,8 @@
 
         const inputSystem = (entities, inputMaybe) => entities.map(
             entity => {
-                if (entity.type === "snake") {
+                if (entity.id === "snake" && entity.position) {
                     const input = inputMaybe.getOrElse({nextDirections: []})
-
                     // cancel commands that go in the same direction that current direction or that are opposed to the current one (forbidden)
                     while (input.nextDirections.length>0) {
                         if (input.nextDirections[0] === entity.direction || input.nextDirections[0] === getOpposedDirection(entity.direction)) {
@@ -138,6 +137,44 @@
                 return entity
             }
         )
+
+
+
+        const appleSystem = entities => entities.map(
+            entity => {
+                // check if the snake is eating an apple, if no remove the queue
+                if (entity.id === "snake" && entity.position) {
+                    const isEatingApple = entities.some(apple =>
+                        apple.type === "apple" && apple?.position?.x === entity.position[0].x && apple?.position?.y === entity.position[0].y
+                    )
+                    if (isEatingApple) {
+                        return entity
+                    }
+                    return {
+                        ...entity,
+                        position: entity.position.slice(0, -1)
+                    }
+                }
+
+                // check if the snake  eating an apple, if yes move the apple
+                if (entity.type === "apple" && entity.position) {
+                    const isEatingApple = entities.some(snake =>
+                        snake.id === "snake" && snake?.position?.[0]?.x === entity.position.x && snake?.position?.[0]?.y === entity.position.y
+                    )
+                    if (isEatingApple) {
+                        return {
+                            ...entity,
+                            position: {
+                                x: Math.floor(Math.random() * (WORLD_WIDTH-1)),
+                                y: Math.floor(Math.random() * (WORLD_HEIGHT-1))
+                            }
+                        }
+                    }
+                }
+                return entity
+            }
+        )
+
 
 
         const renderSystem = (entities, canvasMonad, images) => { canvasMonad.chain(
@@ -195,7 +232,7 @@
                 id: "apple",
                 type: "apple",
                 sprite: "apple",
-                position: {x: 0, y:0}
+                position: {x: 7, y:8}
             })
         ]
 
@@ -221,6 +258,7 @@
         })
 
         const gameUpdate = composeSystem([
+            appleSystem,
             state => inputSystem(state, inputMaybe),
 
             state => renderSystem(state, canvasMonad, images)
@@ -232,7 +270,7 @@
 
         function gameLoop() {
             entities = gameUpdate(entities)
-            setTimeout(gameLoop, 750)
+            setTimeout(gameLoop, 500)
         }
 
         gameLoop()
