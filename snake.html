@@ -83,7 +83,7 @@
     <div id="gameMenu">
         <div id="gameInfo">
             <button id="startButton" role="button">Start</button>
-            <select id="difficulty">
+            <label for="difficulty"></label><select id="difficulty">
                 <option value="500">difficulty 1</option>
                 <option value="300">difficulty 2</option>
                 <option value="200">difficulty 3</option>
@@ -450,6 +450,10 @@
                 document.getElementById("score").innerHTML = settings.score.toString();
                 setTimeout(gameLoop, settings.difficulty)
             } else {
+                const ctx = canvasMonad.getContext('2d')
+                ctx.fillStyle = "black"
+                ctx.font = "60px serif";
+                ctx.fillText("Game Over", 2*CELL_SIZE, 9*CELL_SIZE)
                 document.getElementById("startButton").disabled = false
             }
         }
