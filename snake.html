@@ -128,10 +128,12 @@
                     }
                     // if there is a next command
                     //alert(JSON.stringify([getNextPosition(entity.position[0], input.nextDirections[0]), ...entity.position]))
+                    const test = input.nextDirections[0]
+                    input.nextDirections.shift()
                     return {
                         ...entity,
-                        position: [getNextPosition(entity.position[0], input.nextDirections[0]), ...entity.position],
-                        direction: input.nextDirections[0]
+                        position: [getNextPosition(entity.position[0], test), ...entity.position],
+                        direction: test
                     }
                 }
                 return entity
@@ -177,16 +179,24 @@
 
 
 
-        const collisionSystem = entities => entities.map(
+        const collisionSystem = (entities, inputMaybe) => entities.map(
             entity => {
-                // check if the snake is going oustside of the world
+                // check if the snake is going outside the world
                 if (entity.id === "settings") {
                     const snake = entities.find(entity2 => entity2.id === "snake")
-                    const snakeNextPosition = getNextPosition(snake.position[0], snake.direction)
+                    const input = inputMaybe.getOrElse({nextDirections: [snake.direction]})
+                    //console.log(JSON.stringify(input))
+                    const test = input.nextDirections[0] ? input.nextDirections[0] : snake.direction
+                    const snakeNextPosition = getNextPosition(snake.position[0], test)
+
                     const snakeOutOfWorld = snakeNextPosition.x < 0 || WORLD_WIDTH-1 < snakeNextPosition.x || snakeNextPosition.y < 0 || WORLD_HEIGHT-1 < snakeNextPosition.y
-                    const jammedSnake = snake.position.filter((position) => position.x === snakeNextPosition.x && position.y === snakeNextPosition.y) // TODO debug
-                    console.log(JSON.stringify(jammedSnake))
+                    const jammedSnake = snake.position.slice(1).filter((position) => position.x === snakeNextPosition.x && position.y === snakeNextPosition.y) // TODO debug
+
+                    //console.log(JSON.stringify(snake.position))
+                    //console.log(JSON.stringify(snakeNextPosition)+"  "+test)
+                    //console.log(JSON.stringify(jammedSnake))
                     if (snakeOutOfWorld  || jammedSnake.length>0) {
+                        //alert("stop")
                         return {
                             ...entity,
                             gameOn: false,
@@ -200,41 +210,47 @@
 
 
 
-        const renderSystem = (entities, canvasMonad, images) => { canvasMonad.chain(
-            canvas => {
-                const ctx = canvasMonad.getContext('2d')
-                ctx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+        const renderSystem = (entities, canvasMonad, images) => {
+            const settings = entities.find(entity2 => entity2.id === "settings")
+            //alert(settings.gameOn)
+            if (settings.gameOn) {
+                canvasMonad.chain(
+                    canvas => {
+                        const ctx = canvasMonad.getContext('2d')
+                        ctx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
 
-                // draw the background cells
-                for (let i=0; i<WORLD_HEIGHT; i++) {
-                    for (let j=0; j<WORLD_WIDTH; j++) {
-                        if ((i%2+j)%2 === 0) {
-                            ctx.fillStyle = `rgb(170,215,81)`
-                        } else {
-                            ctx.fillStyle = `rgb(162,209,73)`
-                        }
-                        ctx.fillRect(...convert(j, i))
-                    }
-                }
-
-                // draw the entities
-                entities.map(
-                    entity => {
-                        if (entity.position) {
-                            if (entity.sprite) {
-                                ctx.drawImage(images[entity.sprite], ...convert(entity.position.x, entity.position.y))
-                            } else {
-                                ctx.fillStyle = entity.type === "snake" ? `rgb(71,117,235)` : "black"
-                                for (let i=0; i<entity.position.length; i++) {
-                                    ctx.fillRect(...convert(entity.position[i].x, entity.position[i].y))
+                        // draw the background cells
+                        for (let i = 0; i < WORLD_HEIGHT; i++) {
+                            for (let j = 0; j < WORLD_WIDTH; j++) {
+                                if ((i % 2 + j) % 2 === 0) {
+                                    ctx.fillStyle = `rgb(170, 215, 81)`
+                                } else {
+                                    ctx.fillStyle = `rgb(162, 209, 73)`
                                 }
+                                ctx.fillRect(...convert(j, i))
                             }
                         }
-                        return entity
+
+                        // draw the entities
+                        entities.map(
+                            entity => {
+                                if (entity.position) {
+                                    if (entity.sprite) {
+                                        ctx.drawImage(images[entity.sprite], ...convert(entity.position.x, entity.position.y))
+                                    } else {
+                                        ctx.fillStyle = entity.type === "snake" ? `rgb(71, 117, 235)` : "black"
+                                        for (let i = 0; i < entity.position.length; i++) {
+                                            ctx.fillRect(...convert(entity.position[i].x, entity.position[i].y))
+                                        }
+                                    }
+                                }
+                                return entity
+                            }
+                        )
+                        return CanvasMonad(canvas)
                     }
                 )
-                return CanvasMonad(canvas)
-            })
+            }
             return entities
         }
 
@@ -248,7 +264,7 @@
             entityCreator({
                 id: "settings",
                 type: "settings",
-                difficulty: 500, // time (ms) between game loops
+                difficulty: 750, // time (ms) between game loops
                 gameOn: true,
                 score: 0
             }),
@@ -290,9 +306,9 @@
         const gameUpdate = composeSystem([
             appleSystem,
             state => inputSystem(state, inputMaybe),
-            collisionSystem,
+            state => collisionSystem(state, inputMaybe),
 
-            state => renderSystem(state, canvasMonad, images)
+            state => renderSystem(state, canvasMonad, images),
         ])
 
         function sleep(ms) {
