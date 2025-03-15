@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snake game</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100%;
+            width: 100%;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: 20px solid #578a34;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        //debugger
+        const WORLD_HEIGHT = 15
+        const WORLD_WIDTH = 17
+        const CELL_SIZE = 36
+
+        document.getElementById("gameCanvas").height = WORLD_HEIGHT*CELL_SIZE
+        document.getElementById("gameCanvas").width = WORLD_WIDTH*CELL_SIZE
+
+        const Maybe = value => ({
+            isJust: value !== null && value !== undefined, // TODO delete if needed
+            map: f => (value != null ? Maybe(f(value)) : Maybe(null)),
+            chain: f => (value != null ? f(value) : Maybe(null)),
+            getOrElse: def => (value != null ? value : def)
+        });
+
+        const CanvasMonad = canvas => ({
+            isJust: canvas !== null && canvas !== undefined, // TODO delete if needed
+            map: f => (canvas != null ? CanvasMonad(f(canvas)) : CanvasMonad(null)),
+            chain: f => (canvas != null ? f(canvas) : CanvasMonad(null)),
+            getOrElse: def => (canvas != null ? canvas : def),
+            getContext: type => (canvas != null ? canvas.getContext(type) : null)
+        })
+
+        const InputMonad = target => ({
+            subscribe: (eventType, handler) => {
+                target.addEventListener(eventType, handler)
+                return InputMonad(target)
+            },
+            map: f => InputMonad(f(target)),
+            get: () => target
+        })
+
+        const entityCreator = entity => ({...entity})
+
+        /**
+         * convert coordinates from classic math coordinate system where (0;0) is at the left down corner
+         * to reversed y-axis coordinate system where (0;0) points to the left up corner
+         * also include proportional conversion to game world size
+         */
+        const convert = (x, y) => [x*CELL_SIZE, (-y+WORLD_HEIGHT-1)*CELL_SIZE, CELL_SIZE, CELL_SIZE];
+
+        const composeSystem = systems => systems.reduceRight(
+            (acc, system) => state => system(acc(state)),
+            state => state
+        )
+
+
+
+
+        function getNextPosition(currentPosition, direction) {
+            let x = currentPosition.x
+            let y = currentPosition.y
+            switch (direction) {
+                case "ArrowUp":
+                    return {x: x, y: y+1}
+                case "ArrowDown":
+                    return {x: x, y: y-1}
+                case "ArrowLeft":
+                    return {x: x-1, y: y}
+                case "ArrowRight":
+                    return {x: x+1, y: y}
+                default:
+                    throw new Error("Unknown direction :"+direction);
+            }
+        }
+
+        function getOpposedDirection(direction) {
+            switch (direction) {
+                case "ArrowUp":
+                    return "ArrowDown"
+                case "ArrowDown":
+                    return "ArrowUp"
+                case "ArrowLeft":
+                    return "ArrowRight"
+                case "ArrowRight":
+                    return "ArrowLeft"
+                default:
+                    throw new Error("Unknown direction :"+direction);
+            }
+        }
+
+
+        const inputSystem = (entities, inputMaybe) => entities.map(
+            entity => {
+                if (entity.type === "snake") {
+                    const input = inputMaybe.getOrElse({nextDirections: []})
+
+                    // cancel commands that go in the same direction that current direction or that are opposed to the current one (forbidden)
+                    while (input.nextDirections.length>0) {
+                        if (input.nextDirections[0] === entity.direction || input.nextDirections[0] === getOpposedDirection(entity.direction)) {
+                            input.nextDirections.shift()
+                        } else {
+                            break
+                        }
+                    }
+
+                    if (input.nextDirections.length === 0) {
+                        // if no new command
+                        //alert(JSON.stringify([getNextPosition(entity.position[0], entity.direction), ...entity.position]))
+                        return {
+                            ...entity,
+                            position: [getNextPosition(entity.position[0], entity.direction), ...entity.position]
+                        }
+                    }
+                    // if there is a next command
+                    //alert(JSON.stringify([getNextPosition(entity.position[0], input.nextDirections[0]), ...entity.position]))
+                    return {
+                        ...entity,
+                        position: [getNextPosition(entity.position[0], input.nextDirections[0]), ...entity.position],
+                        direction: input.nextDirections[0]
+                    }
+                }
+                return entity
+            }
+        )
+
+
+        const renderSystem = (entities, canvasMonad, images) => { canvasMonad.chain(
+            canvas => {
+                const ctx = canvasMonad.getContext('2d')
+                ctx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+
+                // draw the background cells
+                for (let i=0; i<WORLD_HEIGHT; i++) {
+                    for (let j=0; j<WORLD_WIDTH; j++) {
+                        if ((i%2+j)%2 === 0) {
+                            ctx.fillStyle = `rgb(170,215,81)`
+                        } else {
+                            ctx.fillStyle = `rgb(162,209,73)`
+                        }
+                        ctx.fillRect(...convert(j, i))
+                    }
+                }
+
+                // draw the entities
+                entities.map(
+                    entity => {
+                        if (entity.position) {
+                            if (entity.sprite) {
+                                ctx.drawImage(images[entity.sprite], ...convert(entity.position.x, entity.position.y))
+                            } else {
+                                ctx.fillStyle = entity.type === "snake" ? `rgb(71,117,235)` : "black"
+                                for (let i=0; i<entity.position.length; i++) {
+                                    ctx.fillRect(...convert(entity.position[i].x, entity.position[i].y))
+                                }
+                            }
+                        }
+                        return entity
+                    }
+                )
+                return CanvasMonad(canvas)
+            })
+            return entities
+        }
+
+
+
+
+
+
+
+        let entities = [
+            entityCreator({
+                id: "snake",
+                type: "snake",
+                position: [{x: 7, y: 4},{x: 7, y: 3}],
+                direction: "ArrowUp"
+            }),
+            entityCreator({
+                id: "apple",
+                type: "apple",
+                sprite: "apple",
+                position: {x: 0, y:0}
+            })
+        ]
+
+        const images = {
+            apple: new Image()
+        }
+        images.apple.alt = "apple_image"
+        images.apple.src = "apple.png"
+
+        let rawInput = {
+            nextDirections: [], // an array containing the next direction commands.
+        }
+
+        let inputMaybe = Maybe(rawInput)
+        let canvas = document.getElementById("gameCanvas")
+        let canvasMonad = CanvasMonad(canvas)
+
+
+        InputMonad(document).subscribe("keydown", e => {
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+                rawInput.nextDirections.push(e.key)
+            }
+        })
+
+        const gameUpdate = composeSystem([
+            state => inputSystem(state, inputMaybe),
+
+            state => renderSystem(state, canvasMonad, images)
+        ])
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function gameLoop() {
+            entities = gameUpdate(entities)
+            setTimeout(gameLoop, 750)
+        }
+
+        gameLoop()
+
+        /*
+
+         */
+    </script>
+</body>
+</html>

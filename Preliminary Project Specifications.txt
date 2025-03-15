@@ -1,0 +1,24 @@
+The requirements for the project task are as follows:
+
+Design an entity-component-system (ECS) engine for video games in JavaScript and implement a simple example of a game using the constructed engine.
+The project must adhere to the functional programming paradigm.
+
+The ECS system must include the following systems:
+	- User interface system (keyboard and/or mouse and/or text input)
+	- Rendering system
+
+
+The project should also include at least three (4) systems that the student defines for the game they are implementing.
+For example:
+	- Physics system for a bird
+	- System for flipping cards in a memory game
+	- AI opponent system
+
+When creating the project, students must demonstrate the application of basic principles covered in the functional programming course:
+	- Application of function composition
+	- Respect for immutability
+	- Use of higher-order functions
+	- Application of map, filter, reduce functions
+	- Use of a Monad for encapsulation of side-effects 
+
+Points are awarded based on the defense, implementing the required changes in the proposed project solution, and answers to theoretical questions.
