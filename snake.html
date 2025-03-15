@@ -104,6 +104,20 @@
             }
         }
 
+        function getEmptyCells(fullCells) {
+            // build an array of all possible cell
+            const array = [];
+            for (let x = 0; x < WORLD_WIDTH; x++) {
+                for (let y = 0; y < WORLD_HEIGHT; y++) {
+                    array.push({ x:x, y:y });
+                }
+            }
+            // get the empty cells
+            return array.filter(item =>
+                !fullCells.some(el => el.x === item.x && el.y === item.y)
+            );
+        }
+
 
         const inputSystem = (entities, inputMaybe) => entities.map(
             entity => {
@@ -164,11 +178,14 @@
                         snake.id === "snake" && snake?.position?.[0]?.x === entity.position.x && snake?.position?.[0]?.y === entity.position.y
                     )
                     if (isEatingApple) {
+                        const snake = entities.find(entity2 => entity2.id === "snake")
+                        const result = getEmptyCells(snake.position)
+                        const rand = Math.floor(Math.random() * (result.length-1))
                         return {
                             ...entity,
                             position: {
-                                x: Math.floor(Math.random() * (WORLD_WIDTH-1)), // TODO check that apple is not in the snake
-                                y: Math.floor(Math.random() * (WORLD_HEIGHT-1))
+                                x: result[rand].x,
+                                y: result[rand].y
                             }
                         }
                     }
@@ -271,7 +288,7 @@
             entityCreator({
                 id: "snake",
                 type: "snake",
-                position: [{x: 7, y: 4},{x: 7, y: 3},{x: 7, y: 2},{x: 7, y: 1},{x: 7, y: 0}],
+                position: [{x: 7, y: 3},{x: 7, y: 2}],
                 direction: "ArrowUp"
             }),
             entityCreator({
@@ -320,10 +337,6 @@
             if (settings.gameOn) {
                 entities = gameUpdate(entities)
                 setTimeout(gameLoop, settings.difficulty)
-            } else {
-                alert("perdu")
-                sleep(100000)
-                // TODO add menu
             }
         }
 
