@@ -233,6 +233,14 @@
                     //alert(JSON.stringify([getNextPosition(entity.position[0], input.nextDirections[0]), ...entity.position]))
                     const test = input.nextDirections[0]
                     input.nextDirections.shift()
+                   /* while (input.nextDirections.length>0) {
+                        if (input.nextDirections[0] === test || input.nextDirections[0] === getOpposedDirection(test)) {
+                            input.nextDirections.shift()
+                        } else {
+                            break
+                        }
+                    }*/
+                    //console.log(input.nextDirections+"    "+test)
                     return {
                         ...entity,
                         position: [getNextPosition(entity.position[0], test), ...entity.position],
@@ -292,21 +300,24 @@
                     const snake = entities.find(entity2 => entity2.id === "snake")
                     const input = inputMaybe.getOrElse({nextDirections: [snake.direction]})
                     //console.log(JSON.stringify(input))
-                    const test = input.nextDirections[0] ? input.nextDirections[0] : snake.direction
-                    const snakeNextPosition = getNextPosition(snake.position[0], test)
+                    let test = input.nextDirections[0] ? input.nextDirections[0] : snake.direction
+                    // if the direction is not opposed to the current one
+                    if (test !== getOpposedDirection(snake.direction)) {
+                        const snakeNextPosition = getNextPosition(snake.position[0], test)
 
-                    const snakeOutOfWorld = snakeNextPosition.x < 0 || WORLD_WIDTH-1 < snakeNextPosition.x || snakeNextPosition.y < 0 || WORLD_HEIGHT-1 < snakeNextPosition.y
-                    const jammedSnake = snake.position.slice(1).filter((position) => position.x === snakeNextPosition.x && position.y === snakeNextPosition.y) // TODO debug
+                        const snakeOutOfWorld = snakeNextPosition.x < 0 || WORLD_WIDTH-1 < snakeNextPosition.x || snakeNextPosition.y < 0 || WORLD_HEIGHT-1 < snakeNextPosition.y
+                        const jammedSnake = snake.position.slice(1).filter((position) => position.x === snakeNextPosition.x && position.y === snakeNextPosition.y)
 
-                    //console.log(JSON.stringify(snake.position))
-                    //console.log(JSON.stringify(snakeNextPosition)+"  "+test)
-                    //console.log(JSON.stringify(jammedSnake))
-                    if (snakeOutOfWorld  || jammedSnake.length>0) {
-                        //alert("stop")
-                        return {
-                            ...entity,
-                            gameOn: false,
-                            score: snake.position.length-2
+                        //console.log(JSON.stringify(snake.position))
+                        //console.log(JSON.stringify(snakeNextPosition)+"  "+test)
+                        //console.log(JSON.stringify(jammedSnake))
+                        if (snakeOutOfWorld  || jammedSnake.length>0) {
+                            //alert("stop")
+                            return {
+                                ...entity,
+                                gameOn: false,
+                                score: snake.position.length-2
+                            }
                         }
                     }
                     return {
@@ -371,7 +382,7 @@
                 entityCreator({
                     id: "settings",
                     type: "settings",
-                    difficulty: 100, // time (ms) between game loops
+                    difficulty: 250, // time (ms) between game loops
                     gameOn: true,
                     score: 0
                 }),
@@ -417,7 +428,6 @@
             appleSystem,
             state => inputSystem(state, inputMaybe),
             state => collisionSystem(state, inputMaybe),
-
             state => renderSystem(state, canvasMonad, images),
         ])
 
