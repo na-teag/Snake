@@ -165,9 +165,32 @@
                         return {
                             ...entity,
                             position: {
-                                x: Math.floor(Math.random() * (WORLD_WIDTH-1)),
+                                x: Math.floor(Math.random() * (WORLD_WIDTH-1)), // TODO check that apple is not in the snake
                                 y: Math.floor(Math.random() * (WORLD_HEIGHT-1))
                             }
+                        }
+                    }
+                }
+                return entity
+            }
+        )
+
+
+
+        const collisionSystem = entities => entities.map(
+            entity => {
+                // check if the snake is going oustside of the world
+                if (entity.id === "settings") {
+                    const snake = entities.find(entity2 => entity2.id === "snake")
+                    const snakeNextPosition = getNextPosition(snake.position[0], snake.direction)
+                    const snakeOutOfWorld = snakeNextPosition.x < 0 || WORLD_WIDTH-1 < snakeNextPosition.x || snakeNextPosition.y < 0 || WORLD_HEIGHT-1 < snakeNextPosition.y
+                    const jammedSnake = snake.position.filter((position) => position.x === snakeNextPosition.x && position.y === snakeNextPosition.y) // TODO debug
+                    console.log(JSON.stringify(jammedSnake))
+                    if (snakeOutOfWorld  || jammedSnake.length>0) {
+                        return {
+                            ...entity,
+                            gameOn: false,
+                            score: snake.position.length
                         }
                     }
                 }
@@ -223,9 +246,16 @@
 
         let entities = [
             entityCreator({
+                id: "settings",
+                type: "settings",
+                difficulty: 500, // time (ms) between game loops
+                gameOn: true,
+                score: 0
+            }),
+            entityCreator({
                 id: "snake",
                 type: "snake",
-                position: [{x: 7, y: 4},{x: 7, y: 3}],
+                position: [{x: 7, y: 4},{x: 7, y: 3},{x: 7, y: 2},{x: 7, y: 1},{x: 7, y: 0}],
                 direction: "ArrowUp"
             }),
             entityCreator({
@@ -260,6 +290,7 @@
         const gameUpdate = composeSystem([
             appleSystem,
             state => inputSystem(state, inputMaybe),
+            collisionSystem,
 
             state => renderSystem(state, canvasMonad, images)
         ])
@@ -269,8 +300,15 @@
         }
 
         function gameLoop() {
-            entities = gameUpdate(entities)
-            setTimeout(gameLoop, 500)
+            const settings = entities.find(entity => entity.id === "settings");
+            if (settings.gameOn) {
+                entities = gameUpdate(entities)
+                setTimeout(gameLoop, settings.difficulty)
+            } else {
+                alert("perdu")
+                sleep(100000)
+                // TODO add menu
+            }
         }
 
         gameLoop()
