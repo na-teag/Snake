@@ -85,7 +85,7 @@
             <button id="startButton" role="button">Start</button>
             <select id="difficulty">
                 <option value="500">difficulty 1</option>
-                <option value="350">difficulty 2</option>
+                <option value="300">difficulty 2</option>
                 <option value="200">difficulty 3</option>
                 <option value="100">difficulty 4</option>
             </select>
@@ -364,6 +364,9 @@
         let entities;
 
         function setupEntities() {
+            let snakeStart = [{x: 7, y: 3},{x: 7, y: 2}]
+            const result = getEmptyCells(snakeStart)
+            const rand = Math.floor(Math.random() * (result.length-1))
             return [
                 entityCreator({
                     id: "settings",
@@ -375,14 +378,14 @@
                 entityCreator({
                     id: "snake",
                     type: "snake",
-                    position: [{x: 7, y: 3},{x: 7, y: 2}],
+                    position: snakeStart,
                     direction: "ArrowUp"
                 }),
                 entityCreator({
                     id: "apple",
                     type: "apple",
                     sprite: "apple",
-                    position: {x: 7, y:8}
+                    position: {x: result[rand].x, y: result[rand].y}
                 })
             ]
         }
@@ -394,7 +397,7 @@
         images.apple.src = "apple.png"
 
         let rawInput = {
-            nextDirections: [], // an array containing the next direction commands.
+            nextDirections: [] // an array containing the next direction commands.
         }
 
         let inputMaybe = Maybe(rawInput)
@@ -443,6 +446,7 @@
 
         startButton.addEventListener("click", () => {
             entities = setupEntities()
+            rawInput.nextDirections = []
             const settings = entities.find(entity => entity.id === "settings");
             settings.gameOn = true;
             settings.difficulty = Number(document.getElementById("difficulty").value)
