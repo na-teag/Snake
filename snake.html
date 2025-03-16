@@ -401,12 +401,15 @@
                 entityCreator({
                     id: "snake",
                     type: "snake",
-                    sprite: "snake-graphics",
+                    spritesSheet: "snake-graphics",
                     spriteSize: 64,
                     position: snakeStart,
                     direction: "ArrowUp",
                     spritePosition: {
                         "head": {
+                            /**
+                             * direction of the snake, pointing to the appropriate cell on the sprites sheet
+                             */
                             "ArrowUp": {
                                 x: 3,
                                 y: 3
@@ -423,87 +426,56 @@
                                 x: 3,
                                 y: 2
                             }
-                        },
+                        },/**
+                         * difference on the axis with the former and next position (order doesn't matter)
+                         * ex : "0,-1;1,0" means that :
+                         *                 - the former/next position is +0 on x-axis and -1 on y-axis, i.e. it's at the bottom of the current cell
+                         *                 - the next/former position is +1 on the x-axis +0 on the y-axis, i.e. it's at the right of the current cell
+                         *  in this example from bottom to right (or right to bottom) in the dictionary it's pointing the sprite on cell (0,3) on the sprites sheet
+                         */
                         "body": {
-                            "ArrowUp": {
-                                /**
-                                 * difference on the axis with the former direction, up direction can only come from the left, from the bottom, or the right
-                                 * to differentiate from the three orientation, the x-axis is used
-                                 * I know it implies repetition, but it's also easier to visualize and debug
-                                 * left : difference of -1 on the x-axis
-                                 * bottom : difference of 0 on the x-axis
-                                 * right : difference of +1 i.e. 1 on the x-axis
-                                 */
-                                "-1": { // so here on the sprite sheet it's the piece used to go up from the left
-                                    x: 2,
-                                    y: 1
-                                },
-                                "0": { // go up from the bottom
-                                    x: 2,
-                                    y: 2
-                                },
-                                "1": { // go up from the right
-                                    x: 0,
-                                    y: 2
-                                }
+                            "1,0;0,1": {
+                                x: 0,
+                                y: 2
                             },
-                            "ArrowRight": { // y-axis
-                                "-1": { // go right from to the bottom
-                                    x: 0,
-                                    y: 4
-                                },
-                                "0": { // go right from the right
-                                    x: 1,
-                                    y: 4
-                                },
-                                "1": { // go right from the top
-                                    x: 0,
-                                    y: 2
-                                }
+                            "0,-1;1,0": {
+                                x: 0,
+                                y: 3
                             },
-                            "ArrowDown": { // x-axis
-                                "-1": { // go down from to the left
-                                    x: 2,
-                                    y: 3
-                                },
-                                "0": { // go down from the top
-                                    x: 2,
-                                    y: 2
-                                },
-                                "1": { // go down from the right
-                                    x: 0,
-                                    y: 3
-                                }
+                            "-1,0;1,0": {
+                                x: 1,
+                                y: 3
                             },
-                            "ArrowLeft": { // y-axis
-                                "-1": { // go left from to the bottom
-                                    x: 2,
-                                    y: 3
-                                },
-                                "0": { // go left from the left
-                                    x: 1,
-                                    y: 3
-                                },
-                                "1": { // go left from the top
-                                    x: 2,
-                                    y: 1
-                                }
+                            "-1,0;0,-1": {
+                                x: 2,
+                                y: 3
+                            },
+                            "0,1;0,-1": {
+                                x: 2,
+                                y :2
+                            },
+                            "0,1;-1,0": {
+                                x: 2,
+                                y: 1
                             }
                         },
+                        /**
+                         * for the tail it's just the difference with the next position, "0,1" is going up, so pointing on the 3,1 cell of the sprites sheet
+                         */
                         "tail": {
-                            "ArrowUp": {
+                            "0,1": {
                                 x: 3,
                                 y: 1
                             },
-                            "ArrowRight": {
+                            "1,0": {
                                 x: 4,
                                 y: 1
                             },
-                            "ArrowDown": {
+                            "0,-1": {
                                 x: 4,
                                 y: 0
                             },
-                            "ArrowLeft": {
+                            "-1,0": {
                                 x: 3,
                                 y: 0
                             }
