@@ -186,7 +186,7 @@
             }
             // get the empty cells
             return array.filter(item =>
-                !fullCells.some(el => el.x === item.x && el.y === item.y)
+                !fullCells.some(element => element.x === item.x && element.y === item.y)
             );
         }
 
@@ -316,13 +316,13 @@
                             return {
                                 ...entity,
                                 gameOn: false,
-                                score: snake.position.length-2
+                                score: snake.position.length-snakeStart.length
                             }
                         }
                     }
                     return {
                         ...entity,
-                        score: snake.position.length-2
+                        score: snake.position.length-snakeStart.length
                     }
                 }
                 return entity
@@ -373,9 +373,9 @@
 
 
         let entities;
+        let snakeStart = [{x: 7, y: 3},{x: 7, y: 2}]
 
         function setupEntities() {
-            let snakeStart = [{x: 7, y: 3},{x: 7, y: 2}]
             const result = getEmptyCells(snakeStart)
             const rand = Math.floor(Math.random() * (result.length-1))
             return [
