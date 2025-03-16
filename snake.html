@@ -364,23 +364,39 @@
                                     if (entity.type === "apple") {
                                         ctx.drawImage(images[entity.sprite], ...convert(entity.position.x, entity.position.y))
                                     } else if (entity.id === "snake") {
+                                        /* former blue squares to draw snake
                                         ctx.fillStyle = entity.type === "snake" ? `rgb(71, 117, 235)` : "black"
                                         for (let i = 0; i < entity.position.length; i++) {
                                             ctx.fillRect(...convert(entity.position[i].x, entity.position[i].y))
-                                        }
+                                        }*/
                                         entity.position.map((cell, index) => {
                                             if (index === 0) {
                                                 // head sprite
-                                                console.log([entity.direction, entity.spritePosition["head"][entity.direction].x, entity.spritePosition["head"][entity.direction].y, entity.spriteSize])
-                                                console.log([entity.direction, ...convertSnake(entity.position[0].x, entity.position[0].y, entity.spritePosition["head"][entity.direction].x, entity.spritePosition["head"][entity.direction].y, entity.spriteSize)])
-                                                ctx.drawImage(images[entity.sprite], ...convertSnake(entity.position[0].x, entity.position[0].y, entity.spritePosition["head"][entity.direction].x, entity.spritePosition["head"][entity.direction].y, entity.spriteSize));
-                                                //ctx.drawImage(images[entity.sprite], ...convertSnake(entity.position[0].x, entity.position[0].y, 3,3 , entity.spriteSize));
+                                                ctx.drawImage(images[entity.sprite], ...convertSnake(entity.position[0].x, entity.position[0].y, entity.spritePosition.head[entity.direction].x, entity.spritePosition.head[entity.direction].y, entity.spriteSize))
                                             } else if (index === entity.position.length-1) {
                                                 // tail sprite
-
+                                                // get the difference with position of next snake part
+                                                const nextX = entity.position[index-1].x - entity.position[index].x
+                                                const nextY = entity.position[index-1].y - entity.position[index].y
+                                                const next = nextX+","+nextY
+                                                ctx.drawImage(images[entity.sprite], ...convertSnake(entity.position[index].x, entity.position[index].y, entity.spritePosition.tail[next].x, entity.spritePosition.tail[next].y, entity.spriteSize))
                                             } else {
                                                 // body sprite
+                                                // get the difference with the position of former and next snake part
+                                                const nextX = entity.position[index-1].x - entity.position[index].x
+                                                const nextY = entity.position[index-1].y - entity.position[index].y
+                                                const formerX = entity.position[index+1].x - entity.position[index].x
+                                                const formerY = entity.position[index+1].y - entity.position[index].y
+                                                const next_former = nextX+","+nextY+";"+formerX+","+formerY
+                                                const former_next = formerX+","+formerY+";"+nextX+","+nextY
 
+                                                if (entity.spritePosition.body[former_next]) {
+                                                    ctx.drawImage(images[entity.sprite], ...convertSnake(entity.position[index].x, entity.position[index].y, entity.spritePosition.body[former_next].x, entity.spritePosition.body[former_next].y, entity.spriteSize))
+                                                } else if (entity.spritePosition.body[next_former]) {
+                                                    ctx.drawImage(images[entity.sprite], ...convertSnake(entity.position[index].x, entity.position[index].y, entity.spritePosition.body[next_former].x, entity.spritePosition.body[next_former].y, entity.spriteSize))
+                                                } else {
+                                                    throw new Error("Unknown entity : "+former_next+" \nUnknown entity : "+next_former)
+                                                }
                                             }
                                         })
                                     }
