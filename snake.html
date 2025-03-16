@@ -316,7 +316,7 @@
                         const snakeNextPosition = getNextPosition(snake.position[0], test)
 
                         const snakeOutOfWorld = snakeNextPosition.x < 0 || WORLD_WIDTH-1 < snakeNextPosition.x || snakeNextPosition.y < 0 || WORLD_HEIGHT-1 < snakeNextPosition.y
-                        // check if a position of a part of the snake have the same coordinate that the snake next position (
+                        // check if a position of a part of the snake has the same coordinate that the snake next position (minus the tail as it will have moved)
                         const jammedSnake = snake.position.slice(0,-1).filter((position) => position.x === snakeNextPosition.x && position.y === snakeNextPosition.y)
 
                         if (snakeOutOfWorld  || jammedSnake.length>0) {
