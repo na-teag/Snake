@@ -343,14 +343,26 @@
                         // draw the entities
                         entities.map(
                             entity => {
-                                if (entity.position) {
-                                    if (entity.sprite) {
+                                if (entity.position && entity.sprite) {
+                                    if (entity.type === "apple") {
                                         ctx.drawImage(images[entity.sprite], ...convert(entity.position.x, entity.position.y))
-                                    } else {
-                                        ctx.fillStyle = entity.type === "snake" ? `rgb(71, 117, 235)` : "black"
-                                        for (let i = 0; i < entity.position.length; i++) {
-                                            ctx.fillRect(...convert(entity.position[i].x, entity.position[i].y))
-                                        }
+                                    } else if (entity.id === "snake") {
+                                        entity.position.map((cell, index) => {
+                                            if (index === 0) {
+                                                // head sprite
+
+                                            } else if (index === entity.position.length-1) {
+                                                // tail sprite
+
+                                            } else {
+                                                // body sprite
+
+                                            }
+                                        })
+                                                ctx.fillStyle = entity.type === "snake" ? `rgb(71, 117, 235)` : "black"
+                                                for (let i = 0; i < entity.position.length; i++) {
+                                                    ctx.fillRect(...convert(entity.position[i].x, entity.position[i].y))
+                                                }
                                     }
                                 }
                                 return entity
@@ -389,8 +401,114 @@
                 entityCreator({
                     id: "snake",
                     type: "snake",
+                    sprite: "snake-graphics",
+                    spriteSize: 64,
                     position: snakeStart,
-                    direction: "ArrowUp"
+                    direction: "ArrowUp",
+                    spritePosition: {
+                        "head": {
+                            "ArrowUp": {
+                                x: 3,
+                                y: 3
+                            },
+                            "ArrowRight": {
+                                x: 4,
+                                y: 3
+                            },
+                            "ArrowDown": {
+                                x: 4,
+                                y: 2
+                            },
+                            "ArrowLeft": {
+                                x: 3,
+                                y: 2
+                            }
+                        },
+                        "body": {
+                            "ArrowUp": {
+                                /**
+                                 * difference on the axis with the former direction, up direction can only come from the left, from the bottom, or the right
+                                 * to differentiate from the three orientation, the x-axis is used
+                                 * I know it implies repetition, but it's also easier to visualize and debug
+                                 * left : difference of -1 on the x-axis
+                                 * bottom : difference of 0 on the x-axis
+                                 * right : difference of +1 i.e. 1 on the x-axis
+                                 */
+                                "-1": { // so here on the sprite sheet it's the piece used to go up from the left
+                                    x: 2,
+                                    y: 1
+                                },
+                                "0": { // go up from the bottom
+                                    x: 2,
+                                    y: 2
+                                },
+                                "1": { // go up from the right
+                                    x: 0,
+                                    y: 2
+                                }
+                            },
+                            "ArrowRight": { // y-axis
+                                "-1": { // go right from to the bottom
+                                    x: 0,
+                                    y: 4
+                                },
+                                "0": { // go right from the right
+                                    x: 1,
+                                    y: 4
+                                },
+                                "1": { // go right from the top
+                                    x: 0,
+                                    y: 2
+                                }
+                            },
+                            "ArrowDown": { // x-axis
+                                "-1": { // go down from to the left
+                                    x: 2,
+                                    y: 3
+                                },
+                                "0": { // go down from the top
+                                    x: 2,
+                                    y: 2
+                                },
+                                "1": { // go down from the right
+                                    x: 0,
+                                    y: 3
+                                }
+                            },
+                            "ArrowLeft": { // y-axis
+                                "-1": { // go left from to the bottom
+                                    x: 2,
+                                    y: 3
+                                },
+                                "0": { // go left from the left
+                                    x: 1,
+                                    y: 3
+                                },
+                                "1": { // go left from the top
+                                    x: 2,
+                                    y: 1
+                                }
+                            }
+                        },
+                        "tail": {
+                            "ArrowUp": {
+                                x: 3,
+                                y: 1
+                            },
+                            "ArrowRight": {
+                                x: 4,
+                                y: 1
+                            },
+                            "ArrowDown": {
+                                x: 4,
+                                y: 0
+                            },
+                            "ArrowLeft": {
+                                x: 3,
+                                y: 0
+                            }
+                        }
+                    }
                 }),
                 entityCreator({
                     id: "apple",
