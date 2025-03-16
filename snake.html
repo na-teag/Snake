@@ -104,14 +104,14 @@
         document.getElementById("gameCanvas").width = WORLD_WIDTH*CELL_SIZE
 
         const Maybe = value => ({
-            isJust: value !== null && value !== undefined, // TODO delete if needed
+            isJust: value !== null && value !== undefined,
             map: f => (value != null ? Maybe(f(value)) : Maybe(null)),
             chain: f => (value != null ? f(value) : Maybe(null)),
             getOrElse: def => (value != null ? value : def)
         });
 
         const CanvasMonad = canvas => ({
-            isJust: canvas !== null && canvas !== undefined, // TODO delete if needed
+            isJust: canvas !== null && canvas !== undefined,
             map: f => (canvas != null ? CanvasMonad(f(canvas)) : CanvasMonad(null)),
             chain: f => (canvas != null ? f(canvas) : CanvasMonad(null)),
             getOrElse: def => (canvas != null ? canvas : def),
@@ -123,8 +123,7 @@
                 target.addEventListener(eventType, handler)
                 return InputMonad(target)
             },
-            map: f => InputMonad(f(target)),
-            get: () => target
+            map: f => InputMonad(f(target))
         })
 
         const entityCreator = entity => ({...entity})
@@ -548,10 +547,6 @@
             state => collisionSystem(state, inputMaybe),
             state => renderSystem(state, canvasMonad, images),
         ])
-
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
 
 
 
